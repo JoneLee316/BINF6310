@@ -5,8 +5,10 @@
 
 #Question 1
 mean <- (1*(1/10))+(2*(1/10))+(3*(1/10))+(4*(1/10))+(5*(1/10))+(6*(1/2))
+print(c("mean =", mean))
   #mean = 4.5
 var <- ((1/10)*((1-mean)^2))+((1/10)*((2-mean)^2))+((1/10)*((3-mean)^2))+((1/10)*((4-mean)^2))+((1/10)*((5-mean)^2))+((1/2)*((6-mean)^2))
+print(c("variance =", var))
   #variance = 3.25
 
 #Question 2
@@ -22,7 +24,9 @@ rollDie <- function(x)
   rolls
 }
 
-rollDie(100)
+print(rollDie(100))
+print("The rolls don't approximate the uniform distribution because the die is loaded and the '6' option is favored more")
+#The rolls don't approximate the uniform distribution because the die is loaded and the "6" option is favored more
 
 #Question 3
 hist(rollDie(10000), main="Histogram of Rolling Loaded Die", xlab="10000 rolls")
@@ -47,6 +51,10 @@ for(i in 1:length(trialSizes))
 
 plot(log10(trialSizes), means, main="Mean vs. Increase Trial Sizes", pch=18)
 lines(log10(trialSizes), rep(mean, length(trialSizes)))
+print("It took approximately 2000 rolls of the dice for the expected value (mean) to converge to 4.5")
+#It took approximately 2000 rolls of the dice for the expected value (mean) to converge to 4.5
 
 plot(log10(trialSizes), vars, main="Variance vs. Increase Trial Sizes", pch=18)
 lines(log10(trialSizes), rep(var, length(trialSizes)))
+print("It took approximately 100 rolls of the dice for the variance to converge to 3.25")
+#It took approximately 100 rolls of the dice for the variance to converge to 3.25
