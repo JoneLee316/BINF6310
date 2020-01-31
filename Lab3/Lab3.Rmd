@@ -1,0 +1,204 @@
+---
+title: "Lab 3 | BINF 6310 | Spring 2020 | Jon Lee"
+output: html_notebook
+---
+Part 1:
+
+You are consulting for a hospital.  They have a diagnostic test for a disease with a known background prevalence of 0.1%.
+
+The test has the following properties:
+p(positive result | person has disease) = 0.91 = rate of true positive result
+p(negative result| person does not have disease) = 0.84 = rate of true negative result 
+
+The cost of running the test one time is $1.  The test can be repeated for each patient and the results of the test are independent of one another allowing for Bayesian updates. The test always yields a positive or negative result.
+
+The requirement of the hospital is that the test is repeated for each patient until a Bayesian posterior of at least 0.9999 is reached for >=95% of patients.
+
+(1) Run simulations for a patient with the disease.  About how many times on average must the test be repeated to achieve the hospital’s requirements?
+
+```{r}
+#first generated 2 functions, one to simulate data, and one to estimate power
+
+#get data function
+getData <- function(likelihood, numPts)
+{
+  d <- vector(mode = "integer", length = numPts)
+  
+  for(i in 1:numPts)
+  {
+    if(runif(1) <= likelihood[1])
+    {
+      d[i] <- 1
+    }
+    else
+    {
+      d[i] <- 2
+    }
+  }
+  
+  return(d)
+}
+
+#estmated power function
+estimatedPower <- function(prob, likelihood_1, likelihood_2, numTests, numSimulationsPerCycle)
+{
+  t <- 1:numTests
+  s <- numSimulationsPerCycle
+  
+  avgPosterior <- vector(length = length(t))
+  estPower <- vector(length = length(t))
+  
+  for(i in t)
+  {
+    posteriorValues <- vector(length = s)
+    
+    for(j in 1:s)
+    {
+      p <- prob
+      
+      data <- getData(likelihood_1, t[i])
+      
+      for(k in 1:length(data))
+      {
+        denom <- likelihood_2[data[k]]*p[2]+likelihood_1[data[k]]*p[1]
+          
+        p[1] = p[1]*likelihood_1[data[k]]/denom
+        p[2] = p[2]*likelihood_2[data[k]]/denom
+      }
+      
+      posteriorValues[j] = p[1]
+    }
+    
+    avgPosterior[i] = mean(posteriorValues)
+    estPower[i] <- sum(posteriorValues >= 1-0.0001)/s
+  }
+  
+  return(estPower)
+}
+```
+
+```{r}
+#probability of having the disease and being healthy
+probOfDisease <- c(0.001, 0.999)
+
+#likelibhoods given a positive, negative result
+likelihoodGivenDisease <- c(0.91, 0.09)
+likelihoodGivenHealthy <- c(0.16, 0.84)
+
+diseased <- estimatedPower(probOfDisease, likelihoodGivenDisease, likelihoodGivenHealthy, 25, 10000)
+print(diseased)
+```
+
+```{r}
+numberOfTests <-1:25
+
+plot(numberOfTests, diseased, main = "estimated power for diseased", xlab = "number of tests", ylab = "estimated power", pch = 18)
+lines(numberOfTests, rep(0.95, length(numberOfTests)), col = "red")
+abline(v = 17, col = "green")
+```
+
+Answer:
+
+It takes approximately 17 tests to reach the hospital requirement that ≥95% of pateints have a Bayesian posterior probability of ≥ 0.9999, for patients with the disease testing positive. 
+
+(2) Repeat the simulations for a patient without the disease.  About how many times on average must the test be repeated to achieve the hospital’s requirements?
+
+```{r}
+#probability of having the disease and being healthy
+probOfHealthy <- c(0.999, 0.001)
+
+#need to flip the probability vector here since we are asking about healthy patients now and reverse the order of healthy and diseased likelihoods since we are asking about healthy patients
+
+healthy <- estimatedPower(probOfHealthy, likelihoodGivenHealthy, likelihoodGivenDisease, 25, 10000)
+print(healthy)
+```
+
+```{r}
+plot(numberOfTests,  healthy, main = "estimated power for healthy", xlab = "number of tests", ylab = "estimated power", pch = 18)
+lines(numberOfTests, rep(0.95, length(numberOfTests)), col = "orange")
+abline(v = 5, col = "blue")
+```
+
+Answer:
+
+It takes approximately 5 tests to reach the hospital requirement that ≥95% of pateints have a Bayesian posterior probability of ≥ 0.9999, for healthy patients that test negative. 
+
+(3) The hospital plans to run the test on one million patients per year.  At a cost of $1 per test, about how much should the hospital budget to run these tests? (That is to say, for a million patients, how many tests can the hospital anticipate running?)
+
+```{r}
+#cost of test (dollars), number of patients (number of test to run), and number of repeats of test per patient
+costOfTest = 1
+numberOfPatients = 1000000
+numberOfTestsPerPatient = 17
+
+#projected cost in dollars
+projectedCost = costOfTest*numberOfPatients*numberOfTestsPerPatient
+print(projectedCost)
+```
+
+Answer:
+
+The hospital should budget 17 million dollars per year if they plan to run the test of 1 million patients. The hospital should budget/test for the condition that the paients are diseases and test positive rather than the opposing condition, becauase of the prevalence of the disease is so small. Although this is more costly, it is a better identifier because individuals will not be tested unless they fall under the category that they could have the disease.
+
+Part 2:
+
+Another manufacturer approaches the hospital with an improved, but more expensive, test with the following properties 
+
+p(positive result | person has disease) = 0.96
+p(negative result| person does not have disease) = 0.95
+
+(1) With this test, how many times on average must the test be repeated to achieve the hospital’s requirements for patients with and without the disease?
+
+```{r}
+#likelibhoods given a positive, negative result for the new test
+likelihoodGivenDisease_newTest <- c(0.96, 0.04)
+likelihoodGivenHealthy_newTest <- c(0.05, 0.95)
+
+#probabilty of disease is still the same
+
+diseased_newTest <- estimatedPower(probOfDisease, likelihoodGivenDisease_newTest, likelihoodGivenHealthy_newTest, 25, 10000)
+print(diseased_newTest)
+```
+
+```{r}
+plot(numberOfTests, diseased_newTest, main = "estimated power for diseased of new test", xlab = "number of tests", ylab = "estimated power", pch = 18)
+lines(numberOfTests, rep(0.95, length(numberOfTests)), col = "red")
+abline(v = 8, col = "green")
+```
+
+Answer:
+
+It takes approximately 8 tests to reach the hospital requirement that ≥95% of pateints have a Bayesian posterior probability of ≥ 0.9999, for patients with the disease testing positive with the new test. 
+
+```{r}
+#use the reverse healthy probability vector here since we are asking about healthy patients now and reverse the order of healthy and diseased likelihoods since we are asking about healthy patients for the new test
+
+healthy_newTest <- estimatedPower(probOfHealthy, likelihoodGivenHealthy_newTest, likelihoodGivenDisease_newTest, 25, 10000)
+print(healthy_newTest)
+```
+ 
+```{r}
+plot(numberOfTests, healthy_newTest, main = "estimated power for healthy of new test", xlab = "number of tests", ylab = "estimated power", pch = 18, ylim = c(0,1))
+lines(numberOfTests, rep(0.95, length(numberOfTests)), col = "orange")
+abline(v = 3, col = "blue")
+```
+ 
+Answer:
+
+It takes approximately 3 tests to reach the hospital requirement that ≥95% of pateints have a Bayesian posterior probability of ≥ 0.9999, for healthy patients that test negative. 
+ 
+(2) Considering only the cost of the test, and assuming the hospital will screen one million   patients with a background prevalence of 0.1%, at about what price point for running the test one time will the hospital save money by switching to the new test?  
+
+```{r}
+#new test parametrics
+numberOfTestsPerPatient_newTest = 8
+
+#what the hospital should pay for the new test per capita, assuming they don't pay more than 17 million in total
+
+costOfTest_newTest = projectedCost/(numberOfTestsPerPatient_newTest*numberOfPatients)
+print(costOfTest_newTest)
+```
+
+Answer:
+
+The hospital should not pay more than rouhgly $2.12 for the new test.
