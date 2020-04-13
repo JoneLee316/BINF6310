@@ -100,7 +100,7 @@ for(i in 1:(ncol(data)-2))
   Y <- data[,j]
   
   dataLM <- lm(Y ~ X)
-  pVals[i] <- anova(dataLM)$"Pr(>F)"
+  pVals[i] <- anova(dataLM)$"Pr(>F)"[1]
 }
 
 #plot p-values via histogram
@@ -139,6 +139,6 @@ Hints: To lookup the ids in the BMI table, you will need to some processing on t
 
 Also, to get the p-value out of the linear model try:
 	
-	 anova(myLm)$"Pr(>F)"
+	 anova(myLm)$"Pr(>F)"[1]
 
 We’ll see why that work shortly in future lectures.
